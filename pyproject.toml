@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=42", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "github_data_pipeline"
+version = "0.1.0"
+description = "GitHub data pipeline and policy evaluation service with a gRPC API"
+authors = [
+    {name = "Developer"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+license = "MIT"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    # GitHub API
+    "PyGithub==1.59.1",
+    "requests==2.31.0",
+    
+    # Data Storage
+    "numpy==1.24.3",
+    "duckdb==0.9.2",
+    "pandas==2.0.3",
+    "pydantic==2.5.1",
+    
+    # gRPC API
+    "grpcio==1.59.0",
+    "grpcio-tools==1.59.0",
+    "protobuf==4.24.4",
+    
+    # Policy Engine
+    "cel-python==0.2.0",
+    
+    # Utilities
+    "python-dotenv==1.0.0",
+    "tqdm==4.66.1",
+    "loguru==0.7.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==7.4.3",
+]
+
+[tool.setuptools]
+packages = ["github_data_pipeline"]
+package-dir = {"" = "."}
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py" 

@@ -1,0 +1,172 @@
+syntax = "proto3";
+
+package github_service;
+
+// Import timestamp for standardized time representation
+import "google/protobuf/timestamp.proto";
+
+// Repository access level enum
+enum AccessLevel {
+  NONE = 0;
+  READ = 1;
+  TRIAGE = 2;
+  WRITE = 3;
+  MAINTAIN = 4;
+  ADMIN = 5;
+}
+
+// User information
+message User {
+  string id = 1;
+  string login = 2;
+  string name = 3;
+  string email = 4;
+  bool has_mfa_enabled = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// Team information
+message Team {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string slug = 4;
+  string parent_team_id = 5;
+  google.protobuf.Timestamp created_at = 6;
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// Repository information
+message Repository {
+  string id = 1;
+  string name = 2;
+  string full_name = 3;
+  string description = 4;
+  bool is_private = 5;
+  bool is_archived = 6;
+  bool is_template = 7;
+  string default_branch = 8;
+  int32 forks_count = 9;
+  int32 stargazers_count = 10;
+  int32 watchers_count = 11;
+  int32 open_issues_count = 12;
+  google.protobuf.Timestamp created_at = 13;
+  google.protobuf.Timestamp updated_at = 14;
+  google.protobuf.Timestamp pushed_at = 15;
+}
+
+// Represents a user's access to a repository
+message UserAccess {
+  string user_id = 1;
+  string user_login = 2;
+  AccessLevel permission = 3;
+}
+
+// Represents a team's access to a repository
+message TeamAccess {
+  string team_id = 1;
+  string team_name = 2;
+  string team_slug = 3;
+  AccessLevel permission = 4;
+}
+
+// Repository access details
+message RepositoryAccess {
+  string repository_id = 1;
+  string repository_name = 2;
+  repeated UserAccess user_access = 3;
+  repeated TeamAccess team_access = 4;
+}
+
+// Filter options for listing repositories
+message ListRepositoriesRequest {
+  // Optional name filter (substring match)
+  optional string name_filter = 1;
+  // Filter by visibility
+  optional bool is_private = 2;
+  // Filter by archive status
+  optional bool is_archived = 3;
+  // Max number of results to return
+  int32 limit = 4;
+  // Pagination offset
+  int32 offset = 5;
+}
+
+message ListRepositoriesResponse {
+  repeated Repository repositories = 1;
+  int32 total_count = 2;
+}
+
+// Request to get repository access details
+message GetRepositoryAccessRequest {
+  // Repository name or ID
+  string repository_identifier = 1;
+}
+
+message GetRepositoryAccessResponse {
+  RepositoryAccess access = 1;
+}
+
+// Policy evaluation
+message PolicyRule {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  string policy_language = 4; // "opa", "cel", "custom"
+  string policy_code = 5;
+  string severity = 6; // "info", "warning", "error", "critical"
+}
+
+message PolicyViolation {
+  string rule_id = 1;
+  string rule_name = 2;
+  string entity_type = 3; // "user", "repository", "team", "access"
+  string entity_id = 4;
+  string message = 5;
+  string severity = 6;
+}
+
+message EvaluatePolicyRequest {
+  // Optional list of policy rules to evaluate (if empty, evaluate all policies)
+  repeated string rule_ids = 1;
+  // Optional filter for specific repositories
+  repeated string repository_ids = 2;
+  // Optional filter for specific users
+  repeated string user_ids = 3;
+  // Optional filter for specific teams
+  repeated string team_ids = 4;
+}
+
+message EvaluatePolicyResponse {
+  repeated PolicyViolation violations = 1;
+  int32 total_evaluated = 2;
+  int32 total_violations = 3;
+}
+
+// Policy information request
+message ListPolicyRulesRequest {
+  // Optional filter by severity
+  optional string severity = 1;
+  // Optional filter by policy language
+  optional string policy_language = 2;
+}
+
+message ListPolicyRulesResponse {
+  repeated PolicyRule rules = 1;
+}
+
+// Service definition
+service GitHubDataService {
+  // List repositories with filtering options
+  rpc ListRepositories(ListRepositoriesRequest) returns (ListRepositoriesResponse) {}
+  
+  // Get access details for a repository
+  rpc GetRepositoryAccess(GetRepositoryAccessRequest) returns (GetRepositoryAccessResponse) {}
+  
+  // Evaluate policies on the dataset and return violations
+  rpc EvaluatePolicy(EvaluatePolicyRequest) returns (EvaluatePolicyResponse) {}
+  
+  // List available policy rules
+  rpc ListPolicyRules(ListPolicyRulesRequest) returns (ListPolicyRulesResponse) {}
+}
